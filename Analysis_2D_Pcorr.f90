@@ -1,7 +1,7 @@
 !     Calculation of Pressure/Temperature Distribution in two-dimensional space
 !     sumit.suresh@uconn.edu
 
-PROGRAM 2D_PT
+PROGRAM PT
 
         IMPLICIT REAL*8(A-H,O-Z)
         INTEGER, PARAMETER:: KREAL=SELECTED_REAL_KIND(14,99) !14 sig figs, 10+-99
@@ -22,11 +22,13 @@ PROGRAM 2D_PT
 
         INTEGER, DIMENSION(NVD,NVD):: KAT
 
-        INTEGER:: NAN,KZ,NAS,KY,NY,NZ                               !Number of particles
+        INTEGER:: NAN,KZ,NAS,KY,NY,NZ, timenew                               !Number of particles
         REAL(KREAL):: TIME,XKE,YKE,ZKE,mass,KB                          !Starting time
         REAL(KREAL):: XL,YL,ZL,DZL        !Size of the computational celL
         REAL(KREAL):: XCENTR,YXCENTR,ZXCENTR        !CENTRE of the computational cel
         REAL(KREAL):: AvPress, AvEN,AvMises,rvel,rpress
+
+	CHARACTER *15 :: file_name
 
         INTEGER NBRMAX,inx,iny,inz,ncx,ncy,ncz
 !       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,7 +39,7 @@ PROGRAM 2D_PT
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! LEVEL OF COARSENING !!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	LOC = Acg
+	LOC = VAR_ACG
 	NCG = LOC**3
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -59,14 +61,11 @@ PROGRAM 2D_PT
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !	Filename
 	OPEN (UNIT = 14,FILE='/gpfs/scratchfs1/sumit/Coldspray/Rigid_impact/VAR_PSIZE/Impact/VAR_LOC/dump.imp1000mps.timestep')
-	OPEN (UNIT = 50,FILE='../timestep_Contour.dat')
-	OPEN (UNIT = 60,FILE='../timestep_Scatter.dat')
-	OPEN (UNIT = 70,FILE='../ParticleDimensions_timestep.dat')
 
 
         REWIND 14
         READ(14,*)
-	      READ(14,*) TIME
+	      READ(14,*) TIMEST
 	      READ(14,*)
 	      READ(14,*) NAN
 	      READ(14,*)
@@ -85,6 +84,21 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
         DO J=1,NAN
          READ(14,*) IDdummy,KTYPE(J),XX(J),YY(J),ZZ(J),Q1X(J),Q1Y(J),Q1Z(J),CNA(J),CSP(J),StrX(J),StrY(J),StrZ(J)     !!!!! LOOP 1
         end do
+
+!       ##############################	CHANGE ts to t (ps)  ###########################
+
+	dt = VAR_TS	!	delta t of integration
+	timed = timest*dt
+	timenew=INT(timed)
+
+	! Write the integer into a string:
+
+  WRITE(file_name, '(I3)')  timenew
+
+	! Open the file with this name
+	open(unit = 50, file = '../'//trim(adjustl(file_name))//'_Contour.dat')
+	open(unit = 60, file = '../'//trim(adjustl(file_name))//'_Scatter.dat')
+	open(unit = 70, file = '../'//trim(adjustl(file_name))//'_Particledimensions.dat')
 
 !       ##############################	SIMULATION CELL SIZE AND CENTERS  ###########################
 
@@ -423,4 +437,4 @@ END Do SECTION
 
 798 FORMAT(1x,F11.4,1x,F11.4,1x,F11.4,1x,I7)
 
-END PROGRAM 2D_PT
+END PROGRAM PT
