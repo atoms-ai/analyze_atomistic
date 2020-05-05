@@ -96,9 +96,9 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
   WRITE(file_name, '(I3)')  timenew
 
 	! Open the file with this name
-	open(unit = 50, file = '../'//trim(adjustl(file_name))//'_Contour.dat')
-	open(unit = 60, file = '../'//trim(adjustl(file_name))//'_Scatter.dat')
-	open(unit = 70, file = '../'//trim(adjustl(file_name))//'_Particledimensions.dat')
+	open(unit = 50, file = '../Contour/'//trim(adjustl(file_name))//'_Contour.dat')
+	open(unit = 60, file = '../Scatter/'//trim(adjustl(file_name))//'_Scatter.dat')
+	open(unit = 70, file = '../Dimensions/'//trim(adjustl(file_name))//'_Particledimensions.dat')
 
 !       ##############################	SIMULATION CELL SIZE AND CENTERS  ###########################
 
