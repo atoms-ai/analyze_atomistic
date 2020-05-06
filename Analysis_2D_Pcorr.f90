@@ -1,6 +1,4 @@
 !     Calculation of Pressure/Temperature Distribution in two-dimensional space
-!	Written specifically for lammps dummp files
-!	cna = 5 (other)
 !     sumit.suresh@uconn.edu
 
 PROGRAM PT
@@ -12,7 +10,7 @@ PROGRAM PT
 
         REAL(KREAL), DIMENSION(:), ALLOCATABLE :: XX,YY,ZZ,TKE          !Coordinates
         REAL(KREAL), DIMENSION(:), ALLOCATABLE :: StrX,StrY,StrZ,StrXY,StrYZ,StrZX    !STRAIN
-        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: Q1X,Q1Y,Q1Z,VX,VY,VZ,CSP  !Velocities
+        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: Q1X,Q1Y,Q1Z,VX,VY,VZ,VelX,VelY,VelZ,CSP  !Velocities
         REAL(KREAL), DIMENSION(:), ALLOCATABLE :: TPRESS,TEMP  !Velocities
 
         INTEGER, DIMENSION(:), ALLOCATABLE :: KTYPE, KHIST !Type & History of each atom
@@ -160,48 +158,57 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
   WRITE(70,*) "Particle Width in Angstroms ="
   WRITE(70,*) (ParticleWmax-ParticleWmin)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Particle Temperature calculation     !@!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Particle Temperature calculation     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  NATOMS:DO I=1,NAN
-    IF(KHIST(I).EQ.1000) THEN
+  NAN_P=0
 
-      VZSEC=VZSEC + Q1Z(I)
-      VYSEC=VYSEC + Q1Y(I)
-      VXSEC=VXSEC + Q1X(I)
+  NATOMS:DO I=1,NAN                             !! Loop 10
 
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
+      CYCLE
+    END IF
+
+    IF(KTYPE(I).EQ.1) THEN
+
+      NAN_P = NAN_P +1
+
+      VZ_p=VZ_p + Q1Z(I)
+      VY_p=VY_p + Q1Y(I)
+      VX_p=VX_p + Q1X(I)
 
     END IF
   END DO NATOMS
 
-
-        Print*,"Average centre of mass Velocities calculated"
-
-  VZAVE=VZSEC/NAN_P
-  VYAVE=VYSEC/NAN_P
-  VXAVE=VXSEC/NAN_P
+  VZ_av=VZ_p/NAN_P
+  VY_av=VY_p/NAN_P
+  VX_av=VX_p/NAN_P
 
 
-        ATOM:DO I=1,NAN
-    IF(KHIST(I).EQ.1000) THEN
+  ATOM:DO I=1,NAN                   !!!!!!!!!!! Loop 11
+
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
+      CYCLE
+    END IF
+
+    IF(KTYPE(I).EQ.1) THEN
 
 !		Removing bias from velocities to calculate temperature componenet of kinetic energies
-      VZ(I)=Q1Z(I)-VZAVE
-      VY(I)=Q1Y(I)-VYAVE
-      VX(I)=Q1X(I)-VXAVE
+      VelZ(I)=Q1Z(I)-VZ_av
+      VelY(I)=Q1Y(I)-VY_av
+      VelX(I)=Q1X(I)-VX_av
 
       !MULTIPLYING BY 10^4 TO ACCOUNT FOR A/PS TO M/S
-      XKE = 0.5d0*mass*1E+04*VX(I)*VX(I)
-      YKE = 0.5d0*mass*1E+04*VY(I)*VY(I)
-      ZKE = 0.5d0*mass*1E+04*VZ(I)*VZ(I)
+      XKE_p = 0.5d0*mass*1E+04*VelX(I)*VelX(I)
+      YKE_p = 0.5d0*mass*1E+04*VelY(I)*VelY(I)
+      ZKE_p = 0.5d0*mass*1E+04*VelZ(I)*VelZ(I)
 
-      TKE(I) = (XKE+YKE+ZKE)
-      TTKE=TTKE+TKE(I)
+      TKE_p = (XKE_p+YKE_p+ZKE_p)
+      TTKE_p=TTKE_p+TKE_p
 
     END IF
-        END DO ATOM
+  END DO ATOM
 
-
-  PTEMP=(2.0d0*TTKE)/(3000.0d0*KB*NAN_P)
+  PTEMP=(2.0d0*TTKE_p)/(3000.0d0*KB*NAN_P)
 
   WRITE(80,*) "Temperature of the particle=", PTEMP, " K"
 
