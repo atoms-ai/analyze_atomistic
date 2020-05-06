@@ -1,4 +1,6 @@
 !     Calculation of Pressure/Temperature Distribution in two-dimensional space
+!	Written specifically for lammps dummp files
+!	cna = 5 (other)
 !     sumit.suresh@uconn.edu
 
 PROGRAM PT
@@ -99,6 +101,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 	open(unit = 50, file = '../Contour/'//trim(adjustl(file_name))//'_Contour.dat')
 	open(unit = 60, file = '../Scatter/'//trim(adjustl(file_name))//'_Scatter.dat')
 	open(unit = 70, file = '../Dimensions/'//trim(adjustl(file_name))//'_Particledimensions.dat')
+  open(unit = 80, file = '../Temperature/'//trim(adjustl(file_name))//'_PTemperature.dat')
 
 !       ##############################	SIMULATION CELL SIZE AND CENTERS  ###########################
 
@@ -123,11 +126,11 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   DO I=1,NAN
 
-    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
       CYCLE
     END IF
 
-    IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(YY(I).LT.(YCENTR+30.0)).AND.(YY(I).LT.(YCENTR-30.0))) THEN      !!!!! LOOP 2
+    IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(YY(I).LT.(YCENTR+30.0)).AND.(YY(I).GT.(YCENTR-30.0))) THEN      !!!!! LOOP 2
 		    IF(ParticleHmax.LE.ZZ(I)) ParticleHmax = ZZ(I)
 		    IF(ParticleHmin.GE.ZZ(I)) ParticleHmin = ZZ(I)
     END IF
@@ -143,7 +146,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   DO I=1,NAN                                                                                                                      !!!!! LOOP 3
 
-    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
       CYCLE
     END IF
 
@@ -157,6 +160,53 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
   WRITE(70,*) "Particle Width in Angstroms ="
   WRITE(70,*) (ParticleWmax-ParticleWmin)
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Particle Temperature calculation     !@!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  NATOMS:DO I=1,NAN
+    IF(KHIST(I).EQ.1000) THEN
+
+      VZSEC=VZSEC + Q1Z(I)
+      VYSEC=VYSEC + Q1Y(I)
+      VXSEC=VXSEC + Q1X(I)
+
+
+    END IF
+  END DO NATOMS
+
+
+        Print*,"Average centre of mass Velocities calculated"
+
+  VZAVE=VZSEC/NAN_P
+  VYAVE=VYSEC/NAN_P
+  VXAVE=VXSEC/NAN_P
+
+
+        ATOM:DO I=1,NAN
+    IF(KHIST(I).EQ.1000) THEN
+
+!		Removing bias from velocities to calculate temperature componenet of kinetic energies
+      VZ(I)=Q1Z(I)-VZAVE
+      VY(I)=Q1Y(I)-VYAVE
+      VX(I)=Q1X(I)-VXAVE
+
+      !MULTIPLYING BY 10^4 TO ACCOUNT FOR A/PS TO M/S
+      XKE = 0.5d0*mass*1E+04*VX(I)*VX(I)
+      YKE = 0.5d0*mass*1E+04*VY(I)*VY(I)
+      ZKE = 0.5d0*mass*1E+04*VZ(I)*VZ(I)
+
+      TKE(I) = (XKE+YKE+ZKE)
+      TTKE=TTKE+TKE(I)
+
+    END IF
+        END DO ATOM
+
+
+  PTEMP=(2.0d0*TTKE)/(3000.0d0*KB*NAN_P)
+
+  WRITE(80,*) "Temperature of the particle=", PTEMP, " K"
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
   XSMIN = XCENTR
   XSMAX = XSMIN
@@ -167,7 +217,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   DO I=1,NAN                                                      !!!!! LOOP 4
 
-    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
       CYCLE
     END IF
 
@@ -254,7 +304,7 @@ SECTION:Do KNZ=1,NZ
 
    YDIM:DO I=1,NAN                        !!!!! LOOP 5
 
-     IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+     IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
        CYCLE
      END IF
 
@@ -292,7 +342,7 @@ END Do SECTION
 
 					NATOMS:DO I=1,NAN                !!!!! LOOP 6
 
-            IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+            IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
               CYCLE
             END IF
 
@@ -323,7 +373,7 @@ END Do SECTION
   ATOM:DO I=1,NAN                       !!!!! LOOP 7
 
 
-    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
       CYCLE
     END IF
 
@@ -443,10 +493,10 @@ END Do SECTION
 	   DO KNY=1,NY
 		     DO I=1,NAN                     !!!!! LOOP 8
 
-           IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+           IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
              CYCLE
            END IF
-           
+
 			        IF((KAT(KNZ,KNY).GT.1).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
 				            WRITE(60,666) XX(I),YY(I),ZZ(I),KTYPE(I),KAT(KNZ,KNY),ZTEMP(KNZ,KNY),ZPRESS(KNZ,KNY),Stress_X(KNZ,KNY),Stress_Y(KNZ,KNY),Stress_Z(KNZ,KNY)
