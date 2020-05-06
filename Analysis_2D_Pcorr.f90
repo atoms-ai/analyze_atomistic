@@ -28,9 +28,20 @@ PROGRAM PT
         REAL(KREAL):: XCENTR,YXCENTR,ZXCENTR        !CENTRE of the computational cel
         REAL(KREAL):: AvPress, AvEN,AvMises,rvel,rpress
 
-	CHARACTER *15 :: file_name
+	      CHARACTER *15 :: file_name
 
-        INTEGER NBRMAX,inx,iny,inz,ncx,ncy,ncz
+        implicit none
+      
+        logical :: exist
+      
+        inquire(file="test.txt", exist=exist)
+        if (exist) then
+          open(12, file="test.txt", status="old", position="append", action="write")
+        else
+          open(12, file="test.txt", status="new", action="write")
+        end if
+        write(12, *) "SOME TEXT"
+        close(12)
 !       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 !	Use this to run
@@ -72,7 +83,7 @@ PROGRAM PT
 
 ALLOCATE (XX(NAN),YY(NAN),ZZ(NAN),TKE(NAN))
 ALLOCATE (StrX(NAN),StrY(NAN),StrZ(NAN),StrXY(NAN),StrYZ(NAN),StrZX(NAN))
-ALLOCATE (Q1X(NAN),Q1Y(NAN),Q1Z(NAN),VX(NAN),VY(NAN),VZ(NAN),CSP(NAN))
+ALLOCATE (Q1X(NAN),Q1Y(NAN),Q1Z(NAN),VX(NAN),VY(NAN),VZ(NAN),VelX(NAN),VelY(NAN),VelZ(NAN),CSP(NAN))
 ALLOCATE (TPRESS(NAN),TEMP(NAN))
 ALLOCATE (KTYPE(NAN), KHIST(NAN))
 ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
@@ -347,7 +358,7 @@ END Do SECTION
 					CYMIN(KNZ,KNY) = YZMIN(KNZ)+(KNY-1)*DYL(KNZ)
 					CYMAX(KNZ,KNY) = YZMIN(KNZ)+KNY*DYL(KNZ)
 
-					NATOMS:DO I=1,NAN                !!!!! LOOP 6
+					NATOMS2:DO I=1,NAN                !!!!! LOOP 6
 
             IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
               CYCLE
@@ -363,7 +374,7 @@ END Do SECTION
 								GO TO 89
 						END IF
 89					CONTINUE
-					END DO NATOMS
+          END DO NATOMS2
 
 					VZAVE(KNZ,KNY)=VZSEC(KNZ,KNY)/KAT(KNZ,KNY)
 					VYAVE(KNZ,KNY)=VYSEC(KNZ,KNY)/KAT(KNZ,KNY)
@@ -377,7 +388,7 @@ END Do SECTION
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-  ATOM:DO I=1,NAN                       !!!!! LOOP 7
+  ATOM2:DO I=1,NAN                       !!!!! LOOP 7
 
 
     IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
@@ -459,7 +470,7 @@ END Do SECTION
 
 34      CONTINUE
 
-  END DO ATOM
+  END DO ATOM2
 
 
 !	Writing output - in fort.50
