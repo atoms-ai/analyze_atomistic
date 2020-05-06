@@ -30,18 +30,6 @@ PROGRAM PT
 
 	      CHARACTER *15 :: file_name
 
-        implicit none
-      
-        logical :: exist
-      
-        inquire(file="test.txt", exist=exist)
-        if (exist) then
-          open(12, file="test.txt", status="old", position="append", action="write")
-        else
-          open(12, file="test.txt", status="new", action="write")
-        end if
-        write(12, *) "SOME TEXT"
-        close(12)
 !       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 !	Use this to run
