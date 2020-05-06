@@ -123,7 +123,11 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   DO I=1,NAN
 
-    IF((KTYPE(I).EQ.1).AND.((CNA(I).NE.0).OR.(CSP(I).NE.0.0)).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(YY(I).LT.(YCENTR+30.0)).AND.(YY(I).LT.(YCENTR-30.0))) THEN      !!!!! LOOP 2
+    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+      CYCLE
+    END IF
+
+    IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(YY(I).LT.(YCENTR+30.0)).AND.(YY(I).LT.(YCENTR-30.0))) THEN      !!!!! LOOP 2
 		    IF(ParticleHmax.LE.ZZ(I)) ParticleHmax = ZZ(I)
 		    IF(ParticleHmin.GE.ZZ(I)) ParticleHmin = ZZ(I)
     END IF
@@ -139,7 +143,11 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   DO I=1,NAN                                                                                                                      !!!!! LOOP 3
 
-	   IF((KTYPE(I).EQ.1).AND.((CNA(I).NE.0).OR.(CSP(I).NE.0.0)).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(ZZ(I).LT.(ParticleHmin+30.0))) THEN
+    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+      CYCLE
+    END IF
+
+	   IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(ZZ(I).LT.(ParticleHmin+30.0))) THEN
 		   IF(ParticleWmax.LE.YY(I)) ParticleWmax = YY(I)
 		   IF(ParticleWmin.GE.YY(I)) ParticleWmin = YY(I)
      END IF
@@ -158,7 +166,12 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
   ZSMAX = ZSMIN
 
   DO I=1,NAN                                                      !!!!! LOOP 4
-    IF((KTYPE(I).EQ.1).AND.((CNA(I).NE.0).OR.(CSP(I).NE.0.0))) THEN
+
+    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+      CYCLE
+    END IF
+
+    IF((KTYPE(I).EQ.1)) THEN
       IF(XSMIN.GE.XX(I)) XSMIN = XX(I)
       IF(XSMAX.LE.XX(I)) XSMAX = XX(I)
       IF(YSMIN.GE.YY(I)) YSMIN = YY(I)
@@ -241,7 +254,11 @@ SECTION:Do KNZ=1,NZ
 
    YDIM:DO I=1,NAN                        !!!!! LOOP 5
 
-      IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2).AND.((CNA(I).NE.0).OR.(CSP(I).NE.0.0))) THEN
+     IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+       CYCLE
+     END IF
+
+      IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
        	IF(YZMIN(KNZ).GE.YY(I)) YZMIN(KNZ) = YY(I)
        	IF(YZMAX(KNZ).LE.YY(I)) YZMAX(KNZ) = YY(I)
@@ -274,6 +291,11 @@ END Do SECTION
 					CYMAX(KNZ,KNY) = YZMIN(KNZ)+KNY*DYL(KNZ)
 
 					NATOMS:DO I=1,NAN                !!!!! LOOP 6
+
+            IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+              CYCLE
+            END IF
+
 						IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 								KAT(KNZ,KNY)=KAT(KNZ,KNY)+1
 
@@ -299,6 +321,11 @@ END Do SECTION
 
 
   ATOM:DO I=1,NAN                       !!!!! LOOP 7
+
+
+    IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+      CYCLE
+    END IF
 
         Do KNZ=1,NZ
           CZMIN(KNZ) = ZSMIN+(KNZ-1)*DZL
@@ -415,6 +442,11 @@ END Do SECTION
   DO KNZ=1,NZ
 	   DO KNY=1,NY
 		     DO I=1,NAN                     !!!!! LOOP 8
+
+           IF ((CNA(I).EQ.0).AND.(CSP(I).EQ.0.0)) THEN
+             CYCLE
+           END IF
+           
 			        IF((KAT(KNZ,KNY).GT.1).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
 				            WRITE(60,666) XX(I),YY(I),ZZ(I),KTYPE(I),KAT(KNZ,KNY),ZTEMP(KNZ,KNY),ZPRESS(KNZ,KNY),Stress_X(KNZ,KNY),Stress_Y(KNZ,KNY),Stress_Z(KNZ,KNY)
