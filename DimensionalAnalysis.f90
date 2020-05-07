@@ -1,4 +1,4 @@
-!     Calculation of Pressure/Temperature Distribution in two-dimensional space
+!     Calculation of particle width and height while impacting a flat rigid substrate
 !     sumit.suresh@uconn.edu
 
 PROGRAM PD
