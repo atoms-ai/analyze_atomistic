@@ -8,7 +8,7 @@ PROGRAM PD
         INTEGER, PARAMETER:: LPMX = 50000000        !Maximum number of particles
 
 
-        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: XX,YY,ZZ        !Coordinates
+        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: XX,YY,ZZ,CSP       !Coordinates
 
         INTEGER, DIMENSION(:), ALLOCATABLE :: KTYPE  !Type & History of each atom
         INTEGER, DIMENSION(:), ALLOCATABLE :: IDGG,CNA
