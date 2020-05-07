@@ -8,7 +8,7 @@ PROGRAM PD
         INTEGER, PARAMETER:: LPMX = 50000000        !Maximum number of particles
 
 
-        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: XX,YY,ZZ,CSP       !Coordinates
+        REAL(KREAL), DIMENSION(:), ALLOCATABLE :: XX,YY,ZZ,CSP        !Coordinates
 
         INTEGER, DIMENSION(:), ALLOCATABLE :: KTYPE  !Type & History of each atom
         INTEGER, DIMENSION(:), ALLOCATABLE :: IDGG,CNA
@@ -117,13 +117,15 @@ ALLOCATE (CNA(NAN))
   WRITE(70,*) "Particle Height in Angstroms ="
   WRITE(70,*) (ParticleHmax-ParticleHmin)
 
+  zlim = ParticleHmin + hcut
+
   DO I=1,NAN                                                                                                                      !!!!! LOOP 3
 
     IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
       CYCLE
     END IF
 
-	   IF((KTYPE(I).EQ.1).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(ZZ(I).LT.hcut)) THEN
+	   IF((KTYPE(I).EQ.1).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(ZZ(I).LT.zlim)) THEN
 		   IF(ParticleWmax.LE.YY(I)) ParticleWmax = YY(I)
 		   IF(ParticleWmin.GE.YY(I)) ParticleWmin = YY(I)
      END IF
