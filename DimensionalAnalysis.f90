@@ -57,6 +57,9 @@ ALLOCATE (CNA(NAN))
         READ(14,*)
         DO J=1,NAN
          READ(14,*) IDdummy,KTYPE(J),XX(J),YY(J),ZZ(J),Q1X,Q1Y,Q1Z,CNA(J),CSP(J),StrX,StrY,StrZ     !!!!! LOOP 1
+         IF((CNA(J).EQ.5).AND.(CSP(J).EQ.0.0)) THEN
+           CNA(J)=10        ! Rewrite ablated atoms to a different CNA value
+         END IF
         end do
 
 !       ##############################	CHANGE ts to t (ps)  ###########################
@@ -94,8 +97,9 @@ ALLOCATE (CNA(NAN))
 	ylim1=ycentr-(wcut/2.0)
 	ylim2=ycentr+(wcut/2.0)
 
-	ParticleHmax = ZCENTR
+	ParticleHmax = 0.0
 	ParticleHmin = ZCENTR
+  SubstrateHmax = 0.0
 
 	ParticleWmax = YCENTR
 	ParticleWmin = YCENTR
@@ -103,13 +107,13 @@ ALLOCATE (CNA(NAN))
 
   DO I=1,NAN
 
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-      CYCLE
-    END IF
-
-    IF((KTYPE(I).EQ.1).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(YY(I).LT.ylim2).AND.(YY(I).GT.ylim1)) THEN      !!!!! LOOP 2
+    IF((KTYPE(I).EQ.1).AND.(CNA(I).NE.10).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(YY(I).LT.ylim2).AND.(YY(I).GT.ylim1)) THEN      !!!!! LOOP 2
 		    IF(ParticleHmax.LE.ZZ(I)) ParticleHmax = ZZ(I)
 		    IF(ParticleHmin.GE.ZZ(I)) ParticleHmin = ZZ(I)
+    END IF
+
+    IF(KTYPE(I).EQ.2) THEN      !!!!! Substrate maximum height
+        IF(SubstrateHmax.LE.ZZ(I)) SubstrateHmax = ZZ(I)
     END IF
 
   END DO
@@ -117,15 +121,11 @@ ALLOCATE (CNA(NAN))
   WRITE(70,*) "Particle Height in Angstroms ="
   WRITE(70,*) (ParticleHmax-ParticleHmin)
 
-  zlim = ParticleHmin + hcut
+  zlim = SubstrateHmax + hcut                 ! Cutoff determined to be hcut + max substrate z dimension
 
   DO I=1,NAN                                                                                                                      !!!!! LOOP 3
 
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
-      CYCLE
-    END IF
-
-	   IF((KTYPE(I).EQ.1).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(ZZ(I).LT.zlim)) THEN
+	   IF((KTYPE(I).EQ.1).AND.(CNA(I).NE.10).AND.(XX(I).LT.xlim2).AND.(XX(I).GT.xlim1).AND.(ZZ(I).LT.zlim)) THEN
 		   IF(ParticleWmax.LE.YY(I)) ParticleWmax = YY(I)
 		   IF(ParticleWmin.GE.YY(I)) ParticleWmin = YY(I)
      END IF
@@ -135,10 +135,5 @@ ALLOCATE (CNA(NAN))
   WRITE(70,*) "Particle Width in Angstroms ="
   WRITE(70,*) (ParticleWmax-ParticleWmin)
 
-
-222 FORMAT(1x,I4,1x,I4,1x,F12.5,1x,F12.5,1x,I7,1x,F12.5,1x,F12.5,x,F12.5,1x,F12.5,1x,F12.5)
-666	FORMAT(1x,F12.5,1x,F12.5,1x,F12.5,1x,I4,1x,I7,1x,F12.5,1x,F12.5,1x,F12.5,1x,F12.5,1x,F12.5)
-
-798 FORMAT(1x,F11.4,1x,F11.4,1x,F11.4,1x,I7)
 
 END PROGRAM PD
