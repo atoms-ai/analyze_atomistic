@@ -41,6 +41,17 @@ PROGRAM PT
 	LOC = VAR_ACG
 	NCG = LOC**3
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! LEVEL OF COARSENING !!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  	LOC = VAR_ACG
+
+  ! setting csp limits
+    latt=4.05
+    latt=latt*LOC
+    csp_max=3.0*(latt**2) ! 50 for MD aluminum
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -82,6 +93,10 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
         READ(14,*)
         DO J=1,NAN
          READ(14,*) IDdummy,KTYPE(J),XX(J),YY(J),ZZ(J),Q1X(J),Q1Y(J),Q1Z(J),CNA(J),CSP(J),StrX(J),StrY(J),StrZ(J)     !!!!! LOOP 1
+         IF((KTYPE(J).EQ.1).AND.(CNA(J).EQ.5).AND.((CSP(J).EQ.0.0).OR.(CSP(J).GT.CSP_MAX))) THEN
+           CNA(J)=10        ! Rewrite ablated atoms to a different CNA value
+           count=count+1
+         END IF
         end do
 
 !       ##############################	CHANGE ts to t (ps)  ###########################
@@ -97,7 +112,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 	! Open the file with this name
 	open(unit = 50, file = '../Contour/'//trim(adjustl(file_name))//'_Contour.dat')
 	open(unit = 60, file = '../Scatter/'//trim(adjustl(file_name))//'_Scatter.dat')
-	open(unit = 70, file = '../Dimensions/'//trim(adjustl(file_name))//'_Particledimensions.dat')
+	!!open(unit = 70, file = '../Dimensions/'//trim(adjustl(file_name))//'_Particledimensions.dat')
   open(unit = 80, file = '../Temperature/'//trim(adjustl(file_name))//'_PTemperature.dat')
 
 !       ##############################	SIMULATION CELL SIZE AND CENTERS  ###########################
@@ -110,52 +125,6 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 	YCENTR=(YHI+YLO)/2.0d0
 	ZCENTR=(ZHI+ZLO)/2.0d0
 
-!       ##############################	PARTICLE DIMENSIONS, WIDTHS AND HEIGHTS  ###########################
-! 2 lattice units - for L8 that is ~60A square in xy plane through the centre to determine max and min z coordinate and thus height
-! 2 lattice units - for L8 that is ~60A slice in x through the centre to determine max and min z coordinate and thus height
-
-	ParticleHmax = ZCENTR
-	ParticleHmin = ZCENTR
-
-	ParticleWmax = YCENTR
-	ParticleWmin = YCENTR
-
-
-  DO I=1,NAN
-
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-      CYCLE
-    END IF
-
-    IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(YY(I).LT.(YCENTR+30.0)).AND.(YY(I).GT.(YCENTR-30.0))) THEN      !!!!! LOOP 2
-		    IF(ParticleHmax.LE.ZZ(I)) ParticleHmax = ZZ(I)
-		    IF(ParticleHmin.GE.ZZ(I)) ParticleHmin = ZZ(I)
-    END IF
-
-	END DO
-
-  WRITE(70,*) "Particle Height in Angstroms ="
-  WRITE(70,*) (ParticleHmax-ParticleHmin)
-
-	ZSMIN = ParticleHmin
-	ZSMAX = ParticleHmax
-  ZSL=ZSMAX-ZSMIN
-
-  DO I=1,NAN                                                                                                                      !!!!! LOOP 3
-
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
-      CYCLE
-    END IF
-
-	   IF((KTYPE(I).EQ.1).AND.(XX(I).LT.(XCENTR+30.0)).AND.(XX(I).GT.(XCENTR-30.0)).AND.(ZZ(I).LT.(ParticleHmin+30.0))) THEN
-		   IF(ParticleWmax.LE.YY(I)) ParticleWmax = YY(I)
-		   IF(ParticleWmin.GE.YY(I)) ParticleWmin = YY(I)
-     END IF
-
-	END DO
-
-  WRITE(70,*) "Particle Width in Angstroms ="
-  WRITE(70,*) (ParticleWmax-ParticleWmin)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Particle Temperature calculation     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -163,11 +132,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   NATOMS:DO I=1,NAN                             !! Loop 10
 
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
-      CYCLE
-    END IF
-
-    IF(KTYPE(I).EQ.1) THEN
+    IF((KTYPE(I).EQ.1).AND.(CNA(I).NE.10)) THEN
 
       NAN_P = NAN_P +1
 
@@ -185,11 +150,7 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
   ATOM:DO I=1,NAN                   !!!!!!!!!!! Loop 11
 
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0)) THEN
-      CYCLE
-    END IF
-
-    IF(KTYPE(I).EQ.1) THEN
+      IF((KTYPE(I).EQ.1).AND.(CNA(I).NE.10)) THEN
 
 !		Removing bias from velocities to calculate temperature componenet of kinetic energies
       VelZ(I)=Q1Z(I)-VZ_av
@@ -215,19 +176,15 @@ ALLOCATE (IDGG(NAN),KNCGG(NAN),CNA(NAN))
 
 
   XSMIN = XCENTR
-  XSMAX = XSMIN
+  XSMAX = 0.0
   YSMIN = YCENTR
-  YSMAX = YSMIN
+  YSMAX = 0.0
   ZSMIN = ZCENTR
-  ZSMAX = ZSMIN
+  ZSMAX = 0.0
 
   DO I=1,NAN                                                      !!!!! LOOP 4
 
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-      CYCLE
-    END IF
-
-    IF((KTYPE(I).EQ.1)) THEN
+    IF((KTYPE(I).EQ.1).AND.(CNA(I).NE.10)) THEN
       IF(XSMIN.GE.XX(I)) XSMIN = XX(I)
       IF(XSMAX.LE.XX(I)) XSMAX = XX(I)
       IF(YSMIN.GE.YY(I)) YSMIN = YY(I)
@@ -310,11 +267,7 @@ SECTION:Do KNZ=1,NZ
 
    YDIM:DO I=1,NAN                        !!!!! LOOP 5
 
-     IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-       CYCLE
-     END IF
-
-      IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
+      IF((CNA(I).NE.10).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
        	IF(YZMIN(KNZ).GE.YY(I)) YZMIN(KNZ) = YY(I)
        	IF(YZMAX(KNZ).LE.YY(I)) YZMAX(KNZ) = YY(I)
@@ -348,11 +301,7 @@ END Do SECTION
 
 					NATOMS2:DO I=1,NAN                !!!!! LOOP 6
 
-            IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-              CYCLE
-            END IF
-
-						IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
+						IF((CNA(I).NE.10).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 								KAT(KNZ,KNY)=KAT(KNZ,KNY)+1
 
 								VZSEC(KNZ,KNY)=VZSEC(KNZ,KNY) + Q1Z(I)
@@ -378,11 +327,6 @@ END Do SECTION
 
   ATOM2:DO I=1,NAN                       !!!!! LOOP 7
 
-
-    IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-      CYCLE
-    END IF
-
         Do KNZ=1,NZ
           CZMIN(KNZ) = ZSMIN+(KNZ-1)*DZL
           CZMAX(KNZ) = ZSMIN+KNZ*DZL
@@ -397,7 +341,7 @@ END Do SECTION
 
 					        !Calculating volume of each bin, the width in x dimension is 800nm
 					        RVOL=XWID*YLEN(KNZ,KNY)*ZLength(KNZ)
-						      IF((ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
+						      IF((CNA(I).NE.10).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
                   !Removing bias from velocities to calculate temperature componenet of kinetic energies
 							           VZ(I)=Q1Z(I)-VZAVE(KNZ,KNY)
@@ -499,11 +443,8 @@ END Do SECTION
 	   DO KNY=1,NY
 		     DO I=1,NAN                     !!!!! LOOP 8
 
-           IF ((CNA(I).EQ.5).AND.(CSP(I).EQ.0.0)) THEN
-             CYCLE
-           END IF
 
-			        IF((KAT(KNZ,KNY).GT.1).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
+			        IF((CNA(I).NE.10).AND.(KAT(KNZ,KNY).GT.1).AND.(ZZ(I).GE.(CZMIN(KNZ))).AND.(ZZ(I).LT.(CZMAX(KNZ))).AND.(YY(I).GE.(CYMIN(KNZ,KNY))).AND.(YY(I).LT.(CYMAX(KNZ,KNY))).AND.(XX(I).GE.XLIM1).AND.(XX(I).LT.XLIM2)) THEN
 
 				            WRITE(60,666) XX(I),YY(I),ZZ(I),KTYPE(I),KAT(KNZ,KNY),ZTEMP(KNZ,KNY),ZPRESS(KNZ,KNY),Stress_X(KNZ,KNY),Stress_Y(KNZ,KNY),Stress_Z(KNZ,KNY)
 
