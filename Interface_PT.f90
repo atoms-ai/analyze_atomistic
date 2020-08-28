@@ -313,7 +313,7 @@ ALLOCATE (CNA(NAN))
 
   DO K=1, NBIN
 
-    WRITE(50,798) K, YC(K), bin_count(K), PRESS(K), TEMPB(K), VOL(K), Vy_avg(K)
+    WRITE(50,798) K, YC(K), bin_count(K), PRESS(K), TEMPB(K), VOL(K), Vy_avg(K)*aps_2_mps
 
   END DO
 
