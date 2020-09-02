@@ -32,7 +32,7 @@ PROGRAM PT
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! LEVEL OF COARSENING !!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !	LOC = VAR_ACG
-  LOC = 1
+  LOC = VAR_ACG
 	NCG = LOC**3
 
   LATT = 4.05d0*LOC
@@ -69,7 +69,7 @@ ENUNIT = AMUTOKG*1.d4*XJOUTOEV
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !	Filename
 	!OPEN (UNIT = 14,FILE='/gpfs/scratchfs1/sumit/Coldspray/Rigid_impact/VAR_PSIZE/Impact/VAR_LOC/dump.imp1000mps.timestep')
-OPEN (UNIT = 14,FILE='dump.imp1000mps.2000')
+OPEN (UNIT = 14,FILE='/gpfs/scratchfs1/sumit/Coldspray/Rigid_impact/VAR_PSIZE/Impact/VAR_LOC/Jetting_fine/dump.imp1000mps.timestep')
 
         REWIND 14
         READ(14,*)
@@ -101,14 +101,16 @@ ALLOCATE (CNA(NAN))
         SubstrateHmax=0.0
 
         ParticleWmax = 0.0
+        Ymax = 0.0
         ParticleWmin = YCENTR
 
         !       ##############################	CARVE OUT THE INTERFACE  ###########################
-        !	User defined bin dimensions - taking a cenrtal slice in x, height in z and binning across y
+        !	(20A cube) and ~1 lattice unit (5A) in height for MD, scale as needed
 
-          bwidth=12.50
-          height=12.50
-          thicc=12.50
+          bwidth=20.0
+          height=20.0
+          h=5.0*LOC       ! height for accurate prediction of Y max (keep it small ~ 5 angstrom)
+          thicc=20.0
 
           print*, "x dimension thickness in Angstroms = ", thicc
           print*, "z dimension height in Angstroms = ", height
@@ -132,6 +134,8 @@ ALLOCATE (CNA(NAN))
 
         pzlim1=SubstrateHmax
         pzlim2=SubstrateHmax+height
+
+        pzlim_int=SubstrateHmax + h
 
         count=0   !counter for number of atoms in the interface for binning
 
@@ -157,9 +161,14 @@ ALLOCATE (CNA(NAN))
 
            END IF
 
+           IF((KTYPE(J).EQ.1).AND.(XX(J).LT.pxlim2).AND.(XX(J).GT.pxlim1).AND.(ZZ(J).LT.pzlim_int).AND.(CNA(J).NE.10)) THEN
+             IF(Ymax.LE.YY(J)) Ymax = YY(J)
+           END IF
+
         END DO INTERF
 
         intf_width = (ParticleWmax-ParticleWmin)
+        print *, "Y max in Angstroms =", Ymax
         print *, "Interface Width in Angstroms =", intf_width
         print *, "Number of atoms in the binning interface =", count
 
@@ -298,18 +307,17 @@ ALLOCATE (CNA(NAN))
 !       ##############################	CHANGE ts to t (ps)  ###########################
 
 !	dt = VAR_TS	!	delta t of integration
-  dt = 2
+  dt = VAR_TS
 	timed = timest*dt
 	timenew=INT(timed)
 
 	! Write the integer into a string:
 
-  WRITE(file_name, '(I6)')  timenew
+  WRITE(file_name, '(I0)')  timenew
 
 	! Open the file with this name
 	!open(unit = 50, file = trim(adjustl(file_name))//'fs_PT_v_Y.dat')
-  open(unit = 50, file = '4000fs_PT_v_Y.dat')
-
+  open(unit = 50, file = '../../IntP/PT_v_Y_realtime_fs.dat')
 
   DO K=1, NBIN
 
